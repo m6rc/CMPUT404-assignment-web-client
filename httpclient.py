@@ -22,7 +22,7 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-import urllib.parse
+from urllib.parse import urlparse
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -68,11 +68,26 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
+        # args are query parameters
+        o = urlparse(url)
+        req = 'GET '+o.path+' HTTP/1.1\r\n'
+        req += 'Host: '+o.hostname+'\r\n'
+        self.sendall(req)
+
+        resp = self.recvall(self.socket)
+
         code = 500
         body = ""
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
+        o = urlparse(url)
+        req = b'POST '+o.path.encode('utf-8')+b' HTTP/1.1\r\n'
+        req += b'Host: '+o.hostname.encode('utf-8')+b'\r\n'
+        req += b'Content-Type: application/x-www-form-urlencoded\r\n'
+
+
+
         code = 500
         body = ""
         return HTTPResponse(code, body)
