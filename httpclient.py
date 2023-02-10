@@ -70,13 +70,20 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         # args are query parameters
         o = urlparse(url)
-        self.connect(o.hostname, o.port)
+        port = o.port
+        path = o.path
+        hostname = o.hostname
+        if (port == None):
+            port = 80  # default port
+        self.connect(hostname, port)
+        if path == '':
+            path = '/'
         if (args):
             argstring = urlencode(args) # add args
-            req = 'GET '+o.path+argstring+' HTTP/1.1\r\n'
+            req = 'GET '+path+argstring+' HTTP/1.1\r\n'
         else:
-            req = 'GET '+o.path+' HTTP/1.1\r\n'
-        req += 'Host: '+o.hostname+'\r\n'
+            req = 'GET '+path+' HTTP/1.1\r\n'
+        req += 'Host: '+hostname+'\r\n'
         req += 'Accept: */*\r\n'
         req += 'Connection: close\r\n'
         req += '\r\n'
@@ -93,9 +100,16 @@ class HTTPClient(object):
 
     def POST(self, url, args=None):
         o = urlparse(url)
-        self.connect(o.hostname, o.port)
-        req = 'POST '+o.path+' HTTP/1.1\r\n'
-        req += 'Host: '+o.hostname+'\r\n'
+        port = o.port
+        path = o.path
+        hostname = o.hostname
+        if (port == None):
+            port = 80  # default port
+        self.connect(hostname, port)
+        if path == '':
+            path = '/'
+        req = 'POST '+path+' HTTP/1.1\r\n'
+        req += 'Host: '+hostname+'\r\n'
         req += 'Content-Type: application/x-www-form-urlencoded\r\n'
         req += 'Accept: */*\r\n'
         if (args):
