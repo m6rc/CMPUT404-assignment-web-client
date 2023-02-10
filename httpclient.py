@@ -76,7 +76,7 @@ class HTTPClient(object):
         if (port == None):
             port = 80  # default port
         self.connect(hostname, port)
-        if path == '':
+        if path == '': # if no path, set to root. fixed slash.org problem
             path = '/'
         if (args):
             argstring = urlencode(args) # add args
@@ -90,7 +90,7 @@ class HTTPClient(object):
 
         self.sendall(req)
 
-        resp = self.recvall(self.socket) # string(?)
+        resp = self.recvall(self.socket)
         self.close()
         resp_tokenized = resp.split()
         code = int(resp_tokenized[1])
@@ -114,7 +114,7 @@ class HTTPClient(object):
         req += 'Accept: */*\r\n'
         if (args):
             argstring = urlencode(args) # add args
-            req += 'Content-Length: '+str(len(argstring))+'\r\n'  # double \n b4 body? whats content len?
+            req += 'Content-Length: '+str(len(argstring))+'\r\n'  # not sure I'm doing content length correctly?
             req += '\r\n'
             req += argstring
         else:
