@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
+# Copyright 2016 Abram Hindle, Marc-Andre Haley, https://github.com/tywtyw2002, and https://github.com/treedust
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -70,26 +70,50 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         # args are query parameters
         o = urlparse(url)
-        req = 'GET '+o.path+' HTTP/1.1\r\n'
+        self.connect(o.hostname, o.port)
+        if (args):
+            argstring = urlencode(args) # add args
+            req = 'GET '+o.path+argstring+' HTTP/1.1\r\n'
+        else:
+            req = 'GET '+o.path+' HTTP/1.1\r\n'
         req += 'Host: '+o.hostname+'\r\n'
+        req += 'Accept: */*\r\n'
+        req += 'Connection: close\r\n'
+        req += '\r\n'
+
         self.sendall(req)
 
-        resp = self.recvall(self.socket)
-
-        code = 500
-        body = ""
+        resp = self.recvall(self.socket) # string(?)
+        self.close()
+        resp_tokenized = resp.split()
+        code = int(resp_tokenized[1])
+        resp_split = resp.split('\r\n\r\n')
+        body = resp_split[1]
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         o = urlparse(url)
-        req = b'POST '+o.path.encode('utf-8')+b' HTTP/1.1\r\n'
-        req += b'Host: '+o.hostname.encode('utf-8')+b'\r\n'
-        req += b'Content-Type: application/x-www-form-urlencoded\r\n'
+        self.connect(o.hostname, o.port)
+        req = 'POST '+o.path+' HTTP/1.1\r\n'
+        req += 'Host: '+o.hostname+'\r\n'
+        req += 'Content-Type: application/x-www-form-urlencoded\r\n'
+        req += 'Accept: */*\r\n'
+        if (args):
+            argstring = urlencode(args) # add args
+            req += 'Content-Length: '+str(len(argstring))+'\r\n'  # double \n b4 body? whats content len?
+            req += '\r\n'
+            req += argstring
+        else:
+            req += 'Content-Length: 0\r\n\r\n'
 
+        self.sendall(req)
 
-
-        code = 500
-        body = ""
+        resp = self.recvall(self.socket)
+        self.close()
+        resp_tokenized = resp.split()
+        code = int(resp_tokenized[1])
+        resp_split = resp.split('\r\n\r\n')
+        body = resp_split[1]
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -108,3 +132,4 @@ if __name__ == "__main__":
         print(client.command( sys.argv[2], sys.argv[1] ))
     else:
         print(client.command( sys.argv[1] ))
+
